@@ -1,0 +1,7 @@
+# Memory model
+
+The snapshot writer stores an odd sequence with release semantics, mutates the fixed record, then stores the next even sequence with release semantics. A reader acquires the first sequence, copies, applies an acquire fence, and accepts only an unchanged even sequence. The ring producer writes a slot then release-stores `write`; the consumer acquire-loads `write`, reads the slot, then release-stores `read`. The reverse acquire load prevents overwrite of unread entries. This relies on lock-free interprocess atomics on the supported Linux ABI.
+
+`helix_ipc_stress` places the reusable sequence snapshot in anonymous process-shared memory, forks a writer, publishes 500,000 records containing three correlated fields, and rejects any reader observation that violates those correlations. This validates the supported Linux implementation against torn records while retaining the process-shared mutex fallback for platforms whose required atomics are not lock-free.
+
+`helix_ipc_failure` first transfers a snapshot through the process-shared mutex/condition-variable baseline, refuses a second live creator, then forks a child that exits while holding the robust mutex. The parent must receive `EOWNERDEAD`, reset the protected snapshot, increment the recovery counter, call `pthread_mutex_consistent`, and resume normal locking. The same test rejects mismatched ABI versions, incorrect region sizes, and the initializing state.

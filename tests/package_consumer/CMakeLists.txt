@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.24)
+project(HelixConsumer LANGUAGES CXX)
+find_package(Helix 0.2 REQUIRED)
+add_executable(helix_consumer main.cpp)
+target_link_libraries(helix_consumer PRIVATE Helix::numerics)
+target_compile_features(helix_consumer PRIVATE cxx_std_20)

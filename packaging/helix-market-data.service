@@ -1,0 +1,18 @@
+[Unit]
+Description=Helix market data service
+After=network.target
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/helix_market_data --config /etc/helix/helix.example.toml
+Restart=on-failure
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_UNIX
+LimitNOFILE=1024
+[Install]
+WantedBy=multi-user.target

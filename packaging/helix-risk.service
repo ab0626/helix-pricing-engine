@@ -1,0 +1,18 @@
+[Unit]
+Description=Helix risk service
+After=helix-pricer.service
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/helix_risk --config /etc/helix/helix.example.toml
+Restart=on-failure
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+RestrictSUIDSGID=true
+LockPersonality=true
+MemoryDenyWriteExecute=true
+RestrictAddressFamilies=AF_UNIX
+LimitNOFILE=1024
+[Install]
+WantedBy=multi-user.target

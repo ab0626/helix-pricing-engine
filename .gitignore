@@ -1,0 +1,9 @@
+/build/
+/build-*/
+/install-*/
+/_packages/
+/*.deb
+/*.tar.gz
+*.csv
+*.jsonl
+/native-results/

@@ -1,0 +1,7 @@
+# Benchmarking
+
+Build Release and run `helix_bench all 200000` after an idle warm-up. Kernel, scaling, CDF, IV, and synchronization modes can run separately. Each latency suite reports min, max, mean, p50, p95, p99, and p99.9 using bounded samples and `CLOCK_MONOTONIC_RAW` on Linux. Environment records include kernel, machine, compiler, logical CPU count, and build type. Scaling reports throughput, speedup, and efficiency; IV reports iteration counts, residuals, and failures. `helix_ipc_bench` measures cross-process Unix sockets, paired POSIX message queues (with conservative fallback attributes), sequence polling, and a process-shared mutex/condition variable. Shared CI only smoke-tests execution and never enforces latency thresholds. Use affinity and `perf stat` locally when available.
+
+`helix_bench cache` is an intentionally synthetic false-sharing demonstration: four writers increment adjacent atomic counters and then cache-line-padded counters. It illustrates coherence cost but should not be treated as an application throughput forecast.
+
+Production batches preserve the original market publication timestamp and the pricing completion timestamp. Risk records market-to-consumption latency in 64 preallocated power-of-two buckets, so observation performs no allocation. Reported percentiles are conservative bucket upper bounds rather than interpolated samples; use external tracing when finer resolution is required.

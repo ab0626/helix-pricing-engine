@@ -1,0 +1,5 @@
+# Numerical methods
+
+Black–Scholes–Merton uses continuous rates and dividend yield. Expiry returns intrinsic value; zero volatility returns the discounted deterministic payoff. Greeks follow analytic formulas. The reference CDF uses `erfc`; the fast path uses the five-term Hart approximation and is tested on [-8,8]. Implied volatility enforces discounted no-arbitrage bounds and uses Newton only inside a maintained bracket, otherwise bisection. SVI fits total variance with deterministic bounded Nelder–Mead and penalties; it does not enforce complete surface arbitrage constraints.
+
+The multi-expiry surface calibrator sorts expiries, lifts later total-variance slices to remove calendar crossings, and validates each slice with the Gatheral risk-neutral-density condition on a configurable dense log-moneyness grid (default `[-3,3]`, 1201 points). It returns the minimum calendar spread and density. The guarantee is explicit and numerical on that domain; extrapolation beyond it must be revalidated with a wider grid.

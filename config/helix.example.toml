@@ -1,0 +1,21 @@
+market_name = "/helix_market"
+result_name = "/helix_results"
+# Omit socket_path to use /tmp/helix_<uid>.sock.
+universe_size = 4096
+underlyings = 8
+risk_consumers = 1
+consumer_id = 0
+numa_node = -1
+ring_capacity = 256
+workers = 2
+update_hz = 100
+kernel = "scalar-fast"
+sync = "condition"
+spin_ns = 50000
+affinity = true
+seed = 42
+realtime_priority = 0
+drop_policy = "drop"
+log_level = "info"
+cleanup_policy = "owner"
+allowed_cpus = ""
