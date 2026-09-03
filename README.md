@@ -69,10 +69,65 @@ Configuration can be loaded with `--config config/helix.example.toml`; later CLI
 
 Status also carries allocation-free market-to-risk latency telemetry: count, min, mean, max, and bounded logarithmic p50/p95/p99/p99.9 estimates. Pricer and risk health is classified as `starting`, `healthy`, `stale`, or `stopped` from PID, heartbeat age, and shutdown state.
 
+## Mathematical foundations
+
+For spot $S$, strike $K$, time to expiry $T$, continuously compounded rate $r$, dividend yield $q$, and volatility $\sigma$, Helix evaluates Black–Scholes–Merton using
+
+$$
+d_1 = \frac{\ln(S/K) + (r-q+\tfrac12\sigma^2)T}{\sigma\sqrt{T}},
+\qquad
+d_2 = d_1-\sigma\sqrt{T}.
+$$
+
+European call and put prices are
+
+$$
+C = Se^{-qT}N(d_1)-Ke^{-rT}N(d_2),
+\qquad
+P = Ke^{-rT}N(-d_2)-Se^{-qT}N(-d_1),
+$$
+
+where $N$ is the standard normal CDF and $\phi$ its density. The main analytic sensitivities used by the risk process include
+
+$$
+\Delta_C=e^{-qT}N(d_1), \qquad
+\Delta_P=-e^{-qT}N(-d_1),
+$$
+
+$$
+\Gamma=\frac{e^{-qT}\phi(d_1)}{S\sigma\sqrt{T}},
+\qquad
+\mathcal V=Se^{-qT}\phi(d_1)\sqrt{T}.
+$$
+
+Implied volatility is the bounded root $\sigma^*$ of
+
+$$
+f(\sigma)=V_{\mathrm{BSM}}(\sigma)-V_{\mathrm{market}}=0.
+$$
+
+Helix supplies bisection, Brent, and safeguarded Newton solvers. Newton uses vega as $f'(\sigma)$, but falls back to the maintained bracket when the derivative is too small or a proposed step leaves the admissible interval.
+
+For log-moneyness $k=\ln(K/F)$, each raw SVI expiry slice models total implied variance as
+
+$$
+w(k)=a+b\left[\rho(k-m)+\sqrt{(k-m)^2+\eta^2}\right],
+$$
+
+with $b\ge 0$, $|\rho|<1$, and $\eta>0$. Across expiries, Helix constrains calendar spreads by requiring $w(k,T_{i+1})\ge w(k,T_i)$ on the declared dense domain. It checks butterfly admissibility through the Gatheral density condition
+
+$$
+g(k)=\left(1-\frac{k w'(k)}{2w(k)}\right)^2
+-\frac{[w'(k)]^2}{4}\left(\frac1{w(k)}+\frac14\right)
++\frac{w''(k)}2 \ge 0.
+$$
+
+These numerical constraints are checked densely over the configured log-moneyness interval; they are deliberately described as domain-bounded validation rather than a global symbolic proof.
+
 ## Architecture and limits
 
 ```text
-market_data -- seqlock shared snapshot --> pricer -- SPSC shared ring --> risk
+market_data -- seqlock shared snapshot --> pricer -- broadcast shared ring --> risk consumers
      ^
      +----------- Unix socket ----------- helixctl
 ```
@@ -95,7 +150,7 @@ Measured 2026-09-01 in a Debian Bookworm Docker container with GCC 12.2, Release
 
 ASan/UBSan and TSan were run separately in the same Linux container; both unit and end-to-end integration tests passed. TSan emits GCC's expected warning that `atomic_thread_fence` itself is not instrumented.
 
-The current six-test Linux suite additionally kills a robust-mutex owner and verifies `EOWNERDEAD` repair, refuses a second live creator, tests process-shared condition signaling, rejects wrong ABI/size and partially initialized headers, publishes 500,000 correlated cross-process seqlock records, verifies small-ring backpressure, replaces a killed supervised cohort, opens simultaneous control clients, and checks fragmented/oversized/malformed socket input.
+The current eight-test Linux suite additionally kills a robust-mutex owner and verifies `EOWNERDEAD` repair, refuses a second live creator, tests process-shared condition signaling, rejects wrong ABI/size and partially initialized headers, publishes 500,000 correlated cross-process seqlock records, verifies small-ring backpressure and three-consumer broadcast delivery, replaces a killed supervised cohort, opens simultaneous control clients, and checks fragmented/oversized/malformed socket input.
 
 ## Operator utilities
 
