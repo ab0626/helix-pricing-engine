@@ -138,6 +138,13 @@ if(HELIX_BUILD_TESTS)
       COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/signal_shutdown.sh
                    ${CMAKE_CURRENT_BINARY_DIR})
     set_tests_properties(helix_signal_shutdown PROPERTIES TIMEOUT 15)
+    if(HELIX_ENABLE_TSAN)
+      set_tests_properties(
+        helix_ipc_stress helix_ipc_failure helix_integration_demo
+        helix_backpressure_demo helix_multi_consumer_demo
+        helix_supervisor_fault helix_signal_shutdown
+        PROPERTIES TIMEOUT 60)
+    endif()
   endif()
 endif()
 
